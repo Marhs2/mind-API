@@ -1,0 +1,187 @@
+package com.example.demo.service;
+
+import com.example.demo.domain.User;
+import com.example.demo.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import java.util.Optional;
+
+@Service
+public class EmailService {
+
+    @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private RealEmailService realEmailService;
+
+    @Value("${spring.mail.username:admin@example.com}")
+    private String fromEmail;
+
+    @Value("${app.base-url:http://localhost:8081}")
+    private String baseUrl;
+
+    /**
+     * 설문 요청 이메일 발송
+     */
+    public void sendSurveyRequestEmail(String userId, String surveyType) {
+        try {
+            // 실제 이메일 서비스가 사용 가능한지 확인
+            if (realEmailService.isEmailAvailable()) {
+                // 실제 이메일 발송
+                realEmailService.sendSurveyRequestEmail(userId, surveyType);
+            } else {
+                // 시뮬레이션 모드 (개발용)
+                sendSurveyRequestEmailSimulation(userId, surveyType);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("이메일 발송 실패: " + e.getMessage());
+            throw new RuntimeException("이메일 발송 중 오류가 발생했습니다: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * 설문 요청 이메일 발송 시뮬레이션 (개발용)
+     */
+    private void sendSurveyRequestEmailSimulation(String userId, String surveyType) {
+        // 사용자 정보 조회
+        Optional<User> userOptional = userRepository.findById(Long.parseLong(userId));
+        if (userOptional.isEmpty()) {
+            throw new RuntimeException("사용자를 찾을 수 없습니다: " + userId);
+        }
+
+        User user = userOptional.get();
+        String toEmail = user.getEmail();
+        String userName = user.getName();
+
+        // 이메일 제목 및 내용 생성
+        String subject = generateSurveyEmailSubject(surveyType);
+        String content = generateSurveyEmailContent(userName, surveyType);
+
+        // 이메일 발송 시뮬레이션 (로그 출력)
+        System.out.println("=== 이메일 발송 시뮬레이션 ===");
+        System.out.println("발신자: " + fromEmail);
+        System.out.println("수신자: " + toEmail);
+        System.out.println("제목: " + subject);
+        System.out.println("내용:");
+        System.out.println(content);
+        System.out.println("=============================");
+        
+        System.out.println("이메일 발송 성공 (시뮬레이션): " + toEmail + " - " + subject);
+    }
+
+    /**
+     * 설문 이메일 제목 생성
+     */
+    private String generateSurveyEmailSubject(String surveyType) {
+        if ("Before".equals(surveyType)) {
+            return "[심리 상담] 상담 전 설문 요청";
+        } else if ("After".equals(surveyType)) {
+            return "[심리 상담] 상담 후 설문 요청";
+        } else {
+            return "[심리 상담] 설문 요청";
+        }
+    }
+
+    /**
+     * 설문 이메일 내용 생성
+     */
+    private String generateSurveyEmailContent(String userName, String surveyType) {
+        StringBuilder content = new StringBuilder();
+        
+        content.append("안녕하세요, ").append(userName).append("님!\n\n");
+        
+        if ("Before".equals(surveyType)) {
+            content.append("상담 전 심리 상태를 파악하기 위한 설문을 요청드립니다.\n");
+            content.append("상담 효과를 정확히 측정하기 위해 상담 시작 전에 설문을 완료해 주시기 바랍니다.\n\n");
+        } else if ("After".equals(surveyType)) {
+            content.append("상담 후 심리 상태 변화를 측정하기 위한 설문을 요청드립니다.\n");
+            content.append("상담의 효과를 분석하기 위해 상담 완료 후에 설문을 완료해 주시기 바랍니다.\n\n");
+        } else {
+            content.append("심리 상태 모니터링을 위한 설문을 요청드립니다.\n\n");
+        }
+        
+        content.append("설문 참여 방법:\n");
+        content.append("1. 아래 링크를 클릭하여 설문 페이지로 이동하세요.\n");
+        content.append("2. 각 감정에 대해 1점(매우 낮음)부터 10점(매우 높음)까지 점수를 선택하세요.\n");
+        content.append("3. 추가 코멘트가 있으시면 자유롭게 작성해 주세요.\n");
+        content.append("4. 설문을 완료한 후 제출 버튼을 클릭하세요.\n\n");
+        
+        content.append("설문 링크: ").append(baseUrl).append("/survey-form\n\n");
+        
+        content.append("설문 소요 시간: 약 5-10분\n");
+        content.append("설문 완료 후 상담사와 함께 결과를 검토할 예정입니다.\n\n");
+        
+        content.append("궁금한 점이 있으시면 언제든지 연락 주시기 바랍니다.\n\n");
+        content.append("감사합니다.\n");
+        content.append("심리 상담팀 드림");
+        
+        return content.toString();
+    }
+
+    /**
+     * 환영 이메일 발송 (회원가입 시)
+     */
+    public void sendWelcomeEmail(String userEmail, String userName) {
+        try {
+            // 실제 이메일 서비스가 사용 가능한지 확인
+            if (realEmailService.isEmailAvailable()) {
+                // 실제 이메일 발송
+                realEmailService.sendWelcomeEmail(userEmail, userName);
+            } else {
+                // 시뮬레이션 모드 (개발용)
+                sendWelcomeEmailSimulation(userEmail, userName);
+            }
+            
+        } catch (Exception e) {
+            System.err.println("환영 이메일 발송 실패: " + e.getMessage());
+            // 환영 이메일은 실패해도 회원가입은 진행되도록 예외를 던지지 않음
+        }
+    }
+
+    /**
+     * 환영 이메일 발송 시뮬레이션 (개발용)
+     */
+    private void sendWelcomeEmailSimulation(String userEmail, String userName) {
+        String subject = "[심리 상담] 회원가입을 환영합니다!";
+        String content = generateWelcomeEmailContent(userName);
+
+        // 이메일 발송 시뮬레이션 (로그 출력)
+        System.out.println("=== 환영 이메일 발송 시뮬레이션 ===");
+        System.out.println("발신자: " + fromEmail);
+        System.out.println("수신자: " + userEmail);
+        System.out.println("제목: " + subject);
+        System.out.println("내용:");
+        System.out.println(content);
+        System.out.println("=================================");
+        
+        System.out.println("환영 이메일 발송 성공 (시뮬레이션): " + userEmail);
+    }
+
+    /**
+     * 환영 이메일 내용 생성
+     */
+    private String generateWelcomeEmailContent(String userName) {
+        StringBuilder content = new StringBuilder();
+        
+        content.append("안녕하세요, ").append(userName).append("님!\n\n");
+        content.append("심리 상담 서비스에 가입해 주셔서 감사합니다.\n\n");
+        content.append("저희 서비스에서는 다음과 같은 기능을 제공합니다:\n");
+        content.append("• 정기적인 심리 상태 모니터링\n");
+        content.append("• 전문 상담사와의 1:1 상담\n");
+        content.append("• 개인별 맞춤 통계 및 분석\n");
+        content.append("• 상담 전후 심리 상태 변화 추적\n\n");
+        content.append("서비스 이용 방법:\n");
+        content.append("1. 로그인 후 '내 통계'에서 심리 상태를 확인하세요.\n");
+        content.append("2. '설문 제출'을 통해 정기적으로 심리 상태를 기록하세요.\n");
+        content.append("3. 필요시 상담 예약을 통해 전문가와 상담하세요.\n\n");
+        content.append("궁금한 점이 있으시면 언제든지 연락 주시기 바랍니다.\n\n");
+        content.append("건강한 마음으로 함께해요!\n");
+        content.append("심리 상담팀 드림");
+        
+        return content.toString();
+    }
+}
