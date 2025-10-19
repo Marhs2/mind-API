@@ -3,6 +3,7 @@ package com.example.demo.auth.oauth;
 import com.example.demo.domain.User;
 import com.example.demo.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -55,7 +56,7 @@ public class CustomOAuth2UserService extends DefaultOAuth2UserService {
         userRepository.save(user);
 
         return new DefaultOAuth2User(
-                Collections.singleton(user.getAuthorities()),
+                Collections.singleton(new SimpleGrantedAuthority("ROLE_" + user.getRole())),
                 attributes,
                 "email");
     }

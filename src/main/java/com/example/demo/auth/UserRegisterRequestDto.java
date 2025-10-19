@@ -24,4 +24,6 @@ public class UserRegisterRequestDto {
     @Size(min = 2, max = 20, message = "이름은 2자 이상 20자 이하로 입력해주세요.")
     @Pattern(regexp = "^[가-힣a-zA-Z\\s]+$", message = "이름은 한글, 영문, 공백만 입력 가능합니다.")
     private String name;
+
+    private String role;
 }
